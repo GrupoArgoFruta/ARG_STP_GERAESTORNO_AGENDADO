@@ -1,0 +1,769 @@
+<!DOCTYPE html> 
+<html>
+<head>
+    <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet'>
+<style>
+
+    .div001 {
+        margin-left: 250px;
+     margin-bottom: 30px;
+     text-align: justify;
+        width: 70%;
+}
+
+    .div003 {
+        margin-left: 100px;
+        margin-bottom: 30px;
+  text-align: justify;
+     width: 80%;
+        margin-top: 30px;
+}
+
+    .div002 {
+        margin-left: auto;
+        margin-right: auto;
+  text-align: justify;
+     width: 80%;
+}
+
+    .img-logo {
+        height: 300px;
+  width: 80%;
+     margin-left: 150px;
+        margin-top: 5%;
+}
+
+    .img-logo-sankhya {
+        height: 50;
+        width: 200px;
+        margin-left: 150px;
+        margin-top: 10%;
+        float: right;
+        margin-bottom: 10%;
+}
+
+    .s001 {
+     text-align: center;
+        margin-bottom: 50px;
+        color: #66cc66;
+        font-family: 'Roboto';
+}
+
+    .s002 {
+     text-align: left;
+        margin-bottom: 20px;
+        margin-left: auto;
+        margin-right: auto;
+     text-align: justify;
+        line-height: 1.5;
+     width: 80%;
+        font-family: 'Roboto';        font-size: 18px;        color: #2e3c50;}
+
+    .center-table {
+         margin-left: auto;
+         margin-right: auto;
+         margin-bottom: 50px;
+}
+
+    h2,h1,h3,h4 {
+        font-family: 'Roboto';
+        color: #66cc66;
+}
+
+    p {
+     font-family: arial, sans-serif;
+     font-size: 18px;
+        text-align: justify;
+        text-indent: 50px;
+        line-height: 1.5;
+        color: #2e3c50;
+        font-family: 'Roboto';}
+
+    li {
+     font-family: arial, sans-serif;
+        font-size: 18px;
+        text-align: justify;
+}
+
+    .p001 {
+        font-family: arial, sans-serif;
+        font-size: 18px;
+        font-style: italic;  
+        text-align: justify;
+        text-indent: 0px;
+}
+
+    .p002 {
+        margin-bottom: 50px;
+        text-align: justify;
+}
+
+    table {
+        font-family: arial, sans-serif;
+        border-collapse: collapse;
+     width: 80%;
+}
+
+    td, th {
+        border: 1px solid #0c0c0c;
+        text-align: left;
+        padding: 8px;
+}
+
+    .th-center {
+        border: 1px solid #0c0c0c;
+        text-align: center;
+        padding: 8px;
+}
+
+    tr:nth-child(even) {
+        background-color:#f2f0ef;
+}
+
+    .tr-white{
+        background-color: rgb(134, 45, 45);
+}
+
+    div.scrollmenu {
+        background-color:#f2f0ef;
+        overflow: auto;
+        white-space: nowrap;
+}
+
+.center-img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 95%;
+}
+    div.scrollmenu p {
+        display: inline-block;
+        color: #2b2727;
+        text-align: left;
+        padding: 14px;
+        text-decoration: none;
+}
+
+    div.scrollmenu a:hover {
+        background-color: #777;
+}
+
+    .verde {
+        color:#66cc66;
+    font-weight: bold;
+}
+
+    .negrito {
+        font-weight: bold;
+}
+
+    .italico {
+        font-style: italic; 
+}
+    .negrito-sublinhado {
+        font-weight: bold;
+        text-decoration: underline;
+}
+    .margem30 {
+        margin-bottom: 30px;
+}
+    .margem-left-150 {
+        margin-left: 150px;
+}
+    .margem-left-100 {
+        margin-left: 100px;
+}
+
+    .justo {
+        text-align: justify;
+}
+    .centralizado {
+        text-align: center;
+}
+</style>
+</head>
+<body>
+
+    <img class="img-logo" src="http://www.sankhya.com.br/files-extras/lps/ind-manual/Topobanner.png">
+
+    <div class="s001">
+        <h2>Importador de Dados</h2>
+</div><div class="s002"> 
+
+        <h2>Introdução</h2>
+
+        <p>Este documento tem por finalidade orientar quanto às regras e forma de preenchimento 
+        das colunas dos <span class="italico">templates</span> 
+        disponíveis para serem baixados e importados no Importador de Dados.
+</p>
+        
+</div><div class="s002">
+
+        <h2>Padrão Importador</h2>
+
+        <p>Os <span class="italico">templates</span> disponíveis estão categorizados por dois padrões 
+           de importação: Os que seguem do importador e os que não seguem. 
+           Esta indicação está disponível na coluna "Padrão" da aba "Baixar <span class="italico">Templates</span>" do 
+           Importador de Dados.</p>
+
+        <p>Desta forma, os <span class="italico">templates</span> que possuírem a informação "Sim", nesta coluna, seguem 
+           o padrão do importador; já os <span class="italico">templates</span> que possuírem a informação "Não", não 
+           utilizam do padrão. Esta indicação deve ser observada, e seguida, para o correto 
+           preenchimento dos <span class="italico">templates</span>, e para o bom comportamento da importação de 
+           dados em si.</p>
+
+        <p>A seguir estão as diferenças entre os dois tipos de padrão.</p>
+
+        <h3><span class="italico">Templates</span> que seguem o padrão do importador</h3>
+
+        <p>Os <span class="italico">templates</span> que seguem o padrão possuem tratativas específicas que 
+           possibilitam, ao usuário, escolher entre importar <span class="italico">templates</span> contendo apenas as colunas 
+           essenciais, ou todas as colunas de um determinado cadastro ou movimentação.</p>
+
+        <p>Além desta, existem tratativas específicas para otimizar o preenchimento dos 
+           <span class="italico">templates</span> e a importação em si, no que tange o relacionamento de dados através das 
+           colunas iniciadas com o prefixo  "ID_EXTERNO_+[nome da coluna]".</p>
+
+        <h3><span class="italico">Templates</span> que NÃO seguem o padrão do importador</h3>
+
+        <p>Os <span class="italico">templates</span> que NÃO seguem o padrão, não possuem as tratativas 
+           específicas mencionadas para os <span class="italico">templates</span> que seguem o padrão.</p>
+
+        <p>Estes <span class="italico">templates</span> possuem apenas o ".csv" contendo todas as colunas presentes na 
+           respectiva tabela. Além disso, as tratativas para relacionamento de dados, que são as 
+           colunas iniciadas com o prefixo "ID_EXTERNO_+[nome da coluna]", não estão disponíveis 
+           para <span class="italico">templates</span> que não possuem o padrão do importador.</p>
+
+        <p>Acesse o manual do Importador de Dados <a href="https://ajuda.sankhya.com.br/hc/pt-br/articles/5874837664023-Importador-de-dados">clicando aqui</a> para consultar mais detalhes.</p>
+
+
+        <h2 class="margem30">Relacionamento entre tabelas</h2>
+        <p>Caso o arquivo ".csv" possua colunas que fazem referência a dados de outras 
+           tabelas, estes dados relacionados devem ser verificados e corretamente preenchidos no 
+           arquivo para evitar erros na importação ou problemas no relacionamento de dados.</p>
+
+        <p>Para relacionar dados utilizando o código do Sankhya Om, é necessário que as 
+           colunas que requerem este código sejam preenchidas com o valor correspondente 
+           ao registro em questão.</p>
+
+        <h3>Coluna "AD_IDEXTERNO"</h3>
+
+        <p>Para que seja possível realizar a atualização de registros, será necessário criar a 
+        coluna "AD_IDEXTERNO" no dicionário de dados do Sankhya Om, bem como o seu índice 
+        no banco de dados.</p>
+
+        <p>Esta coluna será utilizada como chave para verificar se um registro que será 
+        importado para uma determinada tabela já existe na base. Os registros já existentes serão 
+        atualizados de acordo com os dados informados no <span class="italico">template</span> ".csv", caso a opção 
+        "Atualizar os registros" tenha sido selecionada para a pergunta "Deseja atualizar os 
+        registros existentes?" na aba "Importar Dados" do Importador de Dados.</p>
+
+        <p>Caso a opção "Não atualizar" tenha sido selecionada, os registros que possuírem o 
+        valor da coluna "AD_IDEXTERNO", coincidente com algum valor na coluna de mesmo 
+        nome no ".csv", serão ignorados na importação e os dados já existentes na base serão mantidos. </p>
+
+        <p>A coluna "AD_IDEXTERNO" deve ser criada de acordo com a imagem a seguir:</p>
+
+        <img class="center-img" style="border:2px solid black" 
+        src="https://ajuda.sankhya.com.br/hc/article_attachments/1500011197562/mceclip2.png">
+
+        <p><a href="https://www.youtube.com/watch?v=ZEJWGODXRAw">Clique aqui</a> para visualizar um vídeo com o procedimento de criação da coluna "AD_IDEXTERNO".</p>
+
+        <p>Conforme mencionado neste documento, é recomendável criar também um índice 
+        para as colunas "AD_IDEXTERNO". Este índice, ao ser criado, irá contribuir, 
+        consideravelmente para uma melhor performance da importação, reduzindo o tempo 
+        necessário para consulta de dados relacionados aos registros que serão processados.</p>
+
+        <p>Abaixo, você poderá visualizar uma imagem com um exemplo de criação de índice 
+        para a coluna "AD_IDEXTERNO" na tabela "TGFPAR": </p>
+
+        <img class="center-img" style="border:2px solid black" 
+        src="https://ajuda.sankhya.com.br/hc/article_attachments/4410942854039/imagem.png">
+
+        <p>Para mais informações sobre a criação de índice para a coluna "AD_IDEXTERNO", 
+        você pode consultar também um post na Comunidade Sankhya, <a href="https://comunidade.sankhya.com.br/t/dica-ja-criou-seu-indice-para-melhorar-a-performance-do-legacy-generico/1210">clicando aqui</a>.</p>
+
+        <p>Para maiores informações sobre a criação de colunas no dicionário de 
+        dados <a href="https://ajuda.sankhya.com.br/hc/pt-br/articles/360044597294-Dicion%C3%A1rio-de-Dados">clique aqui</a> 
+        para acessar a <span class="negrito-sublinhado">Central de Ajuda</span> do Sankhya Om.</p>
+
+        <h2>Arquivo Leia-me</h2>
+        <p> O arquivo leia-me fornece uma descrição completa de cada uma das colunas a serem preenchidas 
+        no arquivo ".csv" da tabela. No caso dos <span class="italico">templates</span> de entidade 
+        as informações abrangem cada 
+        um dos arquivos que a compõem. Essa descrição inclui:</p> 
+
+        <span class="negrito">Coluna:</span>
+        Representa o nome da coluna na tabela.
+
+ <br>        <span class="negrito">Tipo:</span>
+        Representa o tipo de dado que deve ser preenchido na coluna.
+
+ <br>        <span class="negrito">Tamanho:</span>
+        Representa o limite máximo de caracteres que é permitido na coluna.
+
+ <br>        <span class="negrito">Descrição:</span>
+        Apresenta uma breve descrição da coluna.
+
+ <br>        <span class="negrito">Essencial:</span>
+        Se marcada com um "X", o preenchimento da coluna no ".csv" é essencial.
+
+ <br>        <span class="negrito">Valor <span class="italico">default</span>:</span>
+        Informa se existe um valor <span class="italico">default</span> para a coluna caso não seja informado nenhum dado.
+        Para as colunas que não possuem um valor padrão a linha da coluna estará vazia. 
+
+ <br> 	   <span class="negrito">Valores permitidos / Descrição:</span>
+        Quando existe uma lista de valores permitidos, o campo só poderá receber um dos valores listados.		   Esta coluna apresenta os valores seguidos de suas respectivas descrições (separados por "->"). 		   Exemplo: N -> Não. Apenas o valor deve ser preenchido no <span class="italico">template</span> ".csv".
+
+ <br>        <h2>Informações do(s) <span class="italico">template(s)</span></h2>
+        <p>A seguir estão as informações das colunas que compõem 
+        a(s) tabela(s) do <span class="italico">template</span> baixado.</p>
+</div>
+    
+    <div class="s002">
+        <h2><span class="italico">Template</span> de AD_TCBLANMAN</h2>
+		   <p>A tabela a seguir apresenta as descrições das colunas 			  existentes no <span class="italico">template</span> da tabela de AD_TCBLANMAN:</p>    </div><table class="center-table">
+  <tr>
+        <th class="th-center" colspan="7">Tabela: AD_TCBLANMAN (Contabilização Manual) </td>
+</tr>
+  <tr class="tr-white">
+    <th>Coluna</th>
+    <th class="centralizado">Tipo</th>
+    <th>Tamanho</th>
+    <th>Descrição</th>
+    <th>Essencial</th>
+    <th>Valor <span class="italico">default</span></th>
+    <th>Valores permitidos / Descrição</th>
+</tr>
+  <tr>
+<td>AD_IDEXTERNO</td> 
+<td class="centralizado">VARCHAR2</td>
+<td class="centralizado">256</td>
+<td>Id do Sistema de Origem</td>
+<td class="centralizado">x</td>
+<td></td>
+<td></td>
+  </tr>
+  <tr>
+<td>CODEMP</td> 
+<td class="centralizado">NUMBER</td>
+<td class="centralizado">5</td>
+<td>Cód. Empresa</td>
+<td class="centralizado">x</td>
+<td></td>
+<td></td>
+  </tr>
+  <tr>
+<td>LIBERADO</td> 
+<td class="centralizado">VARCHAR2</td>
+<td class="centralizado">10</td>
+<td>Liberado</td>
+<td class="centralizado">x</td>
+<td></td>
+<td>N -> Não<br>S -> Sim</td>
+  </tr>
+  <tr>
+<td>NUMLANC</td> 
+<td class="centralizado">NUMBER</td>
+<td class="centralizado">10</td>
+<td>Núm. Lançamento</td>
+<td class="centralizado">x</td>
+<td></td>
+<td></td>
+  </tr>
+  <tr>
+<td>NUMLOTE</td> 
+<td class="centralizado">NUMBER</td>
+<td class="centralizado">5</td>
+<td>Nro. Lote</td>
+<td class="centralizado">x</td>
+<td></td>
+<td></td>
+  </tr>
+  <tr>
+<td>REFERENCIA</td> 
+<td class="centralizado">DATE</td>
+<td class="centralizado"></td>
+<td>Referência<br>(Exemplo: 31/12/2021)</td>
+<td class="centralizado">x</td>
+<td></td>
+<td></td>
+  </tr>
+  <tr>
+<td>SEQUENCIA</td> 
+<td class="centralizado">NUMBER</td>
+<td class="centralizado">10</td>
+<td>Sequencia</td>
+<td class="centralizado">x</td>
+<td></td>
+<td></td>
+  </tr>
+  <tr>
+<td>STATUS</td> 
+<td class="centralizado">VARCHAR2</td>
+<td class="centralizado">10</td>
+<td>Status</td>
+<td class="centralizado">x</td>
+<td></td>
+<td>D -> COM DIFERENÇAS DE DEBITO E CREDITO<br>V -> VERIFICADO</td>
+  </tr>
+  <tr>
+<td>TIPLANC</td> 
+<td class="centralizado">VARCHAR2</td>
+<td class="centralizado">4000</td>
+<td>Tip. Lançamento</td>
+<td class="centralizado">x</td>
+<td></td>
+<td>D -> Despesa<br>R -> Receita</td>
+  </tr>
+  <tr>
+<td>VLRCRED</td> 
+<td class="centralizado">FLOAT</td>
+<td class="centralizado">10,2</td>
+<td>Valor Crédito</td>
+<td class="centralizado">x</td>
+<td></td>
+<td></td>
+  </tr>
+  <tr>
+<td>VLRDEB</td> 
+<td class="centralizado">FLOAT</td>
+<td class="centralizado">10,2</td>
+<td>Valor Débito</td>
+<td class="centralizado">x</td>
+<td></td>
+<td></td>
+  </tr>
+  <tr>
+<td>AD_CODPARC</td> 
+<td class="centralizado">NUMBER</td>
+<td class="centralizado">10</td>
+<td>Cód. Parceiro Legado</td>
+<td class="centralizado"> </td>
+<td></td>
+<td></td>
+  </tr>
+  <tr>
+<td>AD_CONTROLE</td> 
+<td class="centralizado">VARCHAR2</td>
+<td class="centralizado">100</td>
+<td>Controle</td>
+<td class="centralizado"> </td>
+<td></td>
+<td></td>
+  </tr>
+  <tr>
+<td>AD_DOCNOPIRA</td> 
+<td class="centralizado">VARCHAR2</td>
+<td class="centralizado">100</td>
+<td>Dcno Piramide</td>
+<td class="centralizado"> </td>
+<td></td>
+<td></td>
+  </tr>
+  <tr>
+<td>AD_DTALTERACAO</td> 
+<td class="centralizado">DATE</td>
+<td class="centralizado"></td>
+<td>Data de Alteração Lançamento<br>(Exemplo: 31/12/2021)</td>
+<td class="centralizado"> </td>
+<td></td>
+<td></td>
+  </tr>
+  <tr>
+<td>AD_DTINCLUSAO</td> 
+<td class="centralizado">DATE</td>
+<td class="centralizado"></td>
+<td>Data Inclusao<br>(Exemplo: 31/12/2021 23:59:59)</td>
+<td class="centralizado"> </td>
+<td></td>
+<td></td>
+  </tr>
+  <tr>
+<td>AD_GRUPOLCT</td> 
+<td class="centralizado">VARCHAR2</td>
+<td class="centralizado">100</td>
+<td>Grupo Lct Pira</td>
+<td class="centralizado"> </td>
+<td></td>
+<td></td>
+  </tr>
+  <tr>
+<td>AD_TIPOAUX</td> 
+<td class="centralizado">VARCHAR2</td>
+<td class="centralizado">100</td>
+<td>Tipo Aux</td>
+<td class="centralizado"> </td>
+<td></td>
+<td></td>
+  </tr>
+  <tr>
+<td>AD_USUALTERACAO</td> 
+<td class="centralizado">NUMBER</td>
+<td class="centralizado">10</td>
+<td>Usuário Alteração</td>
+<td class="centralizado"> </td>
+<td></td>
+<td></td>
+  </tr>
+  <tr>
+<td>AD_USUPIRA</td> 
+<td class="centralizado">VARCHAR2</td>
+<td class="centralizado">100</td>
+<td>Usuário Piramide</td>
+<td class="centralizado"> </td>
+<td></td>
+<td></td>
+  </tr>
+  <tr>
+<td>CHAVE</td> 
+<td class="centralizado">VARCHAR2</td>
+<td class="centralizado">100</td>
+<td>Chave</td>
+<td class="centralizado"> </td>
+<td></td>
+<td></td>
+  </tr>
+  <tr>
+<td>CHAVRATROESTORNO</td> 
+<td class="centralizado">VARCHAR2</td>
+<td class="centralizado">100</td>
+<td>Chave de Rastreamento do Estorno</td>
+<td class="centralizado"> </td>
+<td></td>
+<td></td>
+  </tr>
+  <tr>
+<td>CODCENCUS</td> 
+<td class="centralizado">NUMBER</td>
+<td class="centralizado">10</td>
+<td>Código CR</td>
+<td class="centralizado"> </td>
+<td></td>
+<td></td>
+  </tr>
+  <tr>
+<td>CODCONPAR</td> 
+<td class="centralizado">NUMBER</td>
+<td class="centralizado">10</td>
+<td>Conta Contrapartida</td>
+<td class="centralizado"> </td>
+<td></td>
+<td></td>
+  </tr>
+  <tr>
+<td>CODCTACTB</td> 
+<td class="centralizado">NUMBER</td>
+<td class="centralizado">10</td>
+<td>Conta Contábil (Red.)</td>
+<td class="centralizado"> </td>
+<td></td>
+<td></td>
+  </tr>
+  <tr>
+<td>CODEMPORIG</td> 
+<td class="centralizado">NUMBER</td>
+<td class="centralizado">5</td>
+<td>Empresa de Origem</td>
+<td class="centralizado"> </td>
+<td></td>
+<td></td>
+  </tr>
+  <tr>
+<td>CODHISTCTB</td> 
+<td class="centralizado">NUMBER</td>
+<td class="centralizado">5</td>
+<td>Código Historico</td>
+<td class="centralizado"> </td>
+<td></td>
+<td></td>
+  </tr>
+  <tr>
+<td>CODPROJ</td> 
+<td class="centralizado">NUMBER</td>
+<td class="centralizado">10</td>
+<td>Projeto</td>
+<td class="centralizado"> </td>
+<td></td>
+<td></td>
+  </tr>
+  <tr>
+<td>CODRASTROESTORNO</td> 
+<td class="centralizado">NUMBER</td>
+<td class="centralizado">10</td>
+<td>Cód. Rastreamento Estorno</td>
+<td class="centralizado"> </td>
+<td></td>
+<td></td>
+  </tr>
+  <tr>
+<td>CODUSU</td> 
+<td class="centralizado">NUMBER</td>
+<td class="centralizado">5</td>
+<td>Cód. Usuário</td>
+<td class="centralizado"> </td>
+<td></td>
+<td></td>
+  </tr>
+  <tr>
+<td>COMPLHIST</td> 
+<td class="centralizado">VARCHAR2</td>
+<td class="centralizado">100</td>
+<td>Complemento</td>
+<td class="centralizado"> </td>
+<td></td>
+<td></td>
+  </tr>
+  <tr>
+<td>CONCILIADO</td> 
+<td class="centralizado">VARCHAR2</td>
+<td class="centralizado">10</td>
+<td>Conciliado</td>
+<td class="centralizado"> </td>
+<td></td>
+<td>N -> Não<br>S -> Sim</td>
+  </tr>
+  <tr>
+<td>DTEXTEMPORANEO</td> 
+<td class="centralizado">DATE</td>
+<td class="centralizado"></td>
+<td>Dt. Ocorrência Extem.<br>(Exemplo: 31/12/2021)</td>
+<td class="centralizado"> </td>
+<td></td>
+<td></td>
+  </tr>
+  <tr>
+<td>DTMOV</td> 
+<td class="centralizado">DATE</td>
+<td class="centralizado"></td>
+<td>Data Movimento<br>(Exemplo: 31/12/2021)</td>
+<td class="centralizado"> </td>
+<td></td>
+<td></td>
+  </tr>
+  <tr>
+<td>EXTEMPORANEO</td> 
+<td class="centralizado">VARCHAR2</td>
+<td class="centralizado">10</td>
+<td>Extemporâneo?</td>
+<td class="centralizado"> </td>
+<td></td>
+<td>N -> Não<br>S -> Sim</td>
+  </tr>
+  <tr>
+<td>INDESTORNADO</td> 
+<td class="centralizado">VARCHAR2</td>
+<td class="centralizado">10</td>
+<td>Estorno</td>
+<td class="centralizado"> </td>
+<td></td>
+<td>N -> Não<br>S -> Sim</td>
+  </tr>
+  <tr>
+<td>NUMDOC</td> 
+<td class="centralizado">NUMBER</td>
+<td class="centralizado">10</td>
+<td>Núm. Documento</td>
+<td class="centralizado"> </td>
+<td></td>
+<td></td>
+  </tr>
+  <tr>
+<td>PARTLALUR_A</td> 
+<td class="centralizado">VARCHAR2</td>
+<td class="centralizado">100</td>
+<td>Parte A do e-LALUR</td>
+<td class="centralizado"> </td>
+<td></td>
+<td></td>
+  </tr>
+  <tr>
+<td>VENCIMENTO</td> 
+<td class="centralizado">DATE</td>
+<td class="centralizado"></td>
+<td>Vencimento<br>(Exemplo: 31/12/2021)</td>
+<td class="centralizado"> </td>
+<td></td>
+<td></td>
+  </tr>
+  <tr>
+<td>VLRLANC</td> 
+<td class="centralizado">FLOAT</td>
+<td class="centralizado">10,2</td>
+<td>Valor Lançamento</td>
+<td class="centralizado"> </td>
+<td></td>
+<td></td>
+  </tr>
+</table>
+  <div class="div002">
+    <h2>Exemplos de <span class="italico">templates</span> preenchidos</h2>
+    <p>A seguir estão apresentados três exemplos de <span class="italico">templates</span>     preenchidos, sendo eles das tabelas TGFVEI, TCBEMP e TGFCTB.</p>
+
+    <p></p>
+    <p></p>
+    <p class="p002"></p>
+
+    <h3>Exemplo de <span class="italico">template</span> da tabela TGFVEI</h3>
+    <div class="scrollmenu">
+
+        <p class="p001">AD_IDEXTERNO;AFERICAO;ATIVO;CODCID;CODMOTORISTA;CODPARC;CODQUEST;CODVEICULO;COMBUSTIVEL;EMITEEXPED;
+            EMPPARC;PESOMAX;PLACA;PROPRIO;RESTRICAO;TIPOAFERICAO;VIATRANSP;ANOFABRIC;ANOMOD;ANTT;CAPPOTCIL;
+            CATEGORIA;CHASSIS;CMKG;CODBEM;CODCENCUS;CODEMBARCACAO;CODEMPFOLHA;CODFORMFRETE;CODFUNC;
+            CODMARCAMOD;CODPARCPROPANTT;CODPROD;CONDVEI;CONDVIN;COR;CORDENATRAN;CORFAB;DISTEIXOS;ESPECIETIPO;
+            ESPVEI;MARCAMODELO;MAXLOTACAO;M3MAX;NOMEEMBARCACAO;NUMMOTOR;POTENCIA;RENAVAM;SERIAL;
+            TARA;TIPFORMFRETE;TIPINT;TIPO;TIPOCAR;TIPOCOMBUST;TIPOEMBARCACAO;TIPOPROP;TIPOROD;TIPOVEICULO;
+            TIPVEI;VLRDEPRECMENSAL;VLRSEGMENSAL;VOLTAGEM
+            <br>
+            2212;N;S;5357;0;0;0;3;F;S;P;0;HEX4714;S;0;K;R;2020;2020;TESTE;;;RTDIWHI123123;100;;0;2122;0;;;2150B;;;1;N;BRANCO;
+            120;BRANCO;1;CARRO;CARRO;FOX CONNECT;5;100;EMBARCAÇÃO;1245466469892;118;97795555451155;
+            AS5D46;10;;1;;;1;;0;;1;10;10;10;110</p>
+
+    </div>
+
+           
+    <h3>Exemplo de <span class="italico">template</span> da tabela TCBEMP</h3>
+    <div class="scrollmenu">
+
+
+        <p class="p001">AD_IDEXTERNO;ACEITARHISTZERO;ACEITARVLRLANC;CODEMP;CODEMPPLACTA;CODINSTRESP;CONTADOR;CRC;DEREX;
+            DIFFCONT;DTABERTURA;DTFIMPERCTB;DTINICPERCTB;EMPCONSOLIDA;FORMATRIB;INDADMFUNCLU;INDALIQCSLL;INDAREACOM;INDATIVEXT;
+            INDATIVRURAL;INDCAPINF;INDCOMEXP;INDCOPADOMUNDO;INDDOAELEIT;INDECOMTI;INDFIN;INDINOVTEC;INDLUCEXP;INDOLIMPIADAS;
+            INDOPEXT;INDOPVINC;INDPADIS;INDPAISAPAIS;INDPARTCOLIG;INDPARTCONS;INDPARTEXT;INDPATVD;INDPGTOEXT;INDPGTOREM;
+            INDPJENQUAD;INDPJHAB;INDPOLOAM;INDRECAP;INDRECEXT;INDRECINE;INDRECOPA;INDRECRECEITA;INDREDISEN;INDREICOMP;INDREIDI;
+            INDREIF;INDRENDSERV;INDREPENEC;INDREPES;INDREPNBLREDES;INDRESIDUOSSOLID;INDRETAERO;INDRETID;INDROYPAG;INDROYREC;
+            INDVENDEXP;INDZONEXP;MASCCTA;NUMLOTESAUT;OPTEXTRTT;OPTPAES;OPTREFIS;PERCRATEIO;SIMBVLRNEG;TIPPERIODO;UTILCENCUS;
+            UTILPROJ;APURCSLL;ARQLOGOMARCA;CABDEM;CODCTACTBENCRES;CODEMPORIG;CTAREDAUT;DIGCTA;FORMAAPUR;FORMAAPURI;INDMUDANCPC;
+            NROLOTEMNUALFIM;NROLOTEMNUALINI;NROORDEM;NROORDEM_R;NUMDIARIO;PERALTQDCOM;PJSUJEITACSLL;REFERENCIA;TIPATUALSALDOS;
+            TIPENT;TIPESCPRE;TPOEMPRESA;UFCRCCONTADOR;ULTPAGDIARIO;USAEMPAUXCTBZ
+            <br>
+            TCBEMP 01;S;S;53;53;3;TESTE;0;S;N;07/07/2021 00:00:00;12/12/2021 00:00:00;07/07/2021 00:00:00;N;7;N;S;N;S;N;S;N;S;N;S;N;
+            S;N;S;N;S;N;S;N;S;N;S;N;S;N;S;N;S;N;S;N;1;S;N;S;N;S;N;S;N;S;N;S;N;S;N;S;123456;R;S;N;S;0.5;2;B;S;N;D;TESTE;TESTE;0;53;0;
+            1;T;T;0;456;123;234;345;567;N;3;01/08/2021;L;03;L;1;MG;456;S</p>
+
+    </div>
+
+            
+    <h3>Exemplo de <span class="italico">template</span> da tabela TGFCTB</h3>
+    <div class="scrollmenu">
+
+        <p class="p001">AD_IDEXTERNO;CENCUSCONST;CODTIPOPER;CTACTBCONST;CODCTACTB;DC;LANCAMENTO;PROJCONST;SEQUENCIA;SINTETIZA;
+            TIPDT;CODCENCUS;CODCTACTBTRANS;CODEMP;CODHISTCTB;CODPROJ;CTACTBCONSTTRANS;FORMULA;HISTORICO;TIPCTBZCOMPANY;
+            TIPEMPCOMPANY;TIPOEMPORIG
+            <br>
+            901;S;1000;S;0;C;123;N;4;S;B;010500;0;4;0;R;N;4000;TESTE;E;M;C</p>
+
+    </div>
+
+ <br>     <h2>Maiores informações</h2>
+        <p>Para mais informações consulte o <span class="negrito-sublinhado">Manual do Sistema</span> na <span class="negrito-sublinhado">Central de Ajuda</span> e os links abaixo:</p>
+    		  <ul>
+    		    <li><a href="https://ajuda.sankhya.com.br/hc/pt-br/articles/5874837664023-Importador-de-dados">Central de Ajuda do Importador de Dados</a></li>
+    		    <li><a href="https://ajuda.sankhya.com.br/hc/pt-br/articles/360044597294-Dicion%C3%A1rio-de-Dados">Central de Ajuda do Dicionário de Dados</a></li>
+    		    <li><a href="https://ajuda.sankhya.com.br/hc/pt-br/articles/360044603894-DBExplorer">Central de Ajuda do DBExplorer</a></li>
+    		    <li><a href="https://www.youtube.com/watch?v=ZEJWGODXRAw">[Vídeo] Criação da coluna AD_IDEXTERNO</a></li>
+    		    <li><a href="https://docs.google.com/document/d/1CaMV_ALUeHxXker2xe90iV4EC8Ifgdk0-cjNUQoMw6s/edit?usp=sharing">Dúvidas frequentes</a></li>
+    		  </ul><img class="img-logo-sankhya" src="https://www.sankhya.com.br/wp-content/uploads/2021/02/logosankhya-1.png">  </div>
+
+</body>
+</html>
