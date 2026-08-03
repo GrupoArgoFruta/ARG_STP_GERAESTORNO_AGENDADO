@@ -104,24 +104,24 @@ Provisão mensal das NFs/
 ```mermaid
 flowchart TD
     subgraph Compras["Setor Compras"]
-        A[Usuário clica ARG_STP_MARCARPROV no Pedido] --> B{DTNEG no mês\ncorrente e TOP\nhabilitado?}
-        B -- Não --> B1[Erro -20002 / ignora linha]
-        B -- Sim --> C[AD_PROVISIONA = 'S']
-        C --> D[Motor nativo TGFCTB gera\nperna de ORIGEM em TCBLAN\n(rastreada via TCBINT)]
-        D --> E[Todo dia 1 do mês:\nARG_STP_GERAESTORNO_AGENDADO]
-        E --> F[Gera perna de ESTORNO\nespelhada, D/R invertido,\ndata = dia 1 do mês seguinte\nà origem]
-        F --> G[AD_GERAESTORNO = 'S'\n(flag de status)]
+        A["Usuário clica ARG_STP_MARCARPROV no Pedido"] --> B{"DTNEG no mês corrente e TOP habilitado?"}
+        B -- Não --> B1["Erro -20002 / ignora linha"]
+        B -- Sim --> C["AD_PROVISIONA = 'S'"]
+        C --> D["Motor nativo TGFCTB gera a perna de ORIGEM em TCBLAN (rastreada via TCBINT)"]
+        D --> E["Todo dia 1 do mês: ARG_STP_GERAESTORNO_AGENDADO"]
+        E --> F["Gera perna de ESTORNO espelhada, D/R invertido, data = dia 1 do mês seguinte à origem"]
+        F --> G["AD_GERAESTORNO = 'S' (flag de status)"]
     end
 
     subgraph Fiscal["Setor Fiscal"]
-        H[Usuário seleciona protocolos\npendentes e clica\nARG_STP_PROVISAONF_FISCAL] --> I{Item não gera\nestoque e TOP\nna whitelist?}
-        I -- Não --> I1[Ignora protocolo]
-        I -- Sim --> J[Busca Natureza/CR via\nrateio TGFRAT ou padrão\ndo pedido]
-        J --> K[Busca Conta Contábil\nem TGFNCC]
-        K --> L[Grava PROVISÃO + ESTORNO D+1\ndireto em TCBLAN]
+        H["Usuário seleciona protocolos pendentes e clica ARG_STP_PROVISAONF_FISCAL"] --> I{"Item não gera estoque e TOP na whitelist?"}
+        I -- Não --> I1["Ignora protocolo"]
+        I -- Sim --> J["Busca Natureza/CR via rateio TGFRAT ou padrão do pedido"]
+        J --> K["Busca Conta Contábil em TGFNCC"]
+        K --> L["Grava PROVISÃO + ESTORNO D+1 direto em TCBLAN"]
     end
 
-    G --> M[(ARG_QRY_STATUSPROVISAO\nacompanhamento)]
+    G --> M["ARG_QRY_STATUSPROVISAO - acompanhamento"]
     L --> M
 
     style D fill:#007bff,color:#fff
