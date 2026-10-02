@@ -45,7 +45,7 @@ Provisão mensal das NFs/
 
 | Objeto | Tipo | Setor | Descrição |
 |--------|------|-------|-----------|
-| `ARG_STP_MARCARPROV` | Botão de ação | Compras | Marca `TGFCAB.AD_PROVISIONA='S'` no Pedido selecionado (`TIPMOV='O'`). Só aceita pedidos cuja `DTNEG` esteja no mês corrente e cujo `CODTIPOPER` esteja habilitado na fórmula nativa de `TGFCTB`. |
+| `ARG_STP_MARCARPROV` | Botão de ação | Compras | Marca `TGFCAB.AD_PROVISIONA='S'` no Pedido selecionado (`TIPMOV='O'`). Só aceita pedidos em aberto (`PENDENTE='S'`) cuja data de entrada (`DTENTSAI`, ou `DTNEG` se vazia) seja do mês corrente, ou do mês anterior até o 5º dia útil (seg–sex, sem feriados) do mês corrente, e cujo `CODTIPOPER` esteja habilitado na fórmula nativa de `TGFCTB`. |
 | `ARG_STP_DESMARCARPROV` | Botão de ação | Compras | Desmarca `AD_PROVISIONA`. Bloqueia se o pedido já tiver lançamento gerado (`TCBINT.ORIGEM='E'`). |
 | `ARG_STP_GERAESTORNO_AGENDADO` | Rotina agendada (Proc. Banco de dados) | Compras | Encontra lançamentos de origem (gerados pelo motor nativo via `AD_PROVISIONA`) ainda sem estorno e grava a perna espelho (D↔R invertido) datada no dia 1 do mês seguinte ao da origem. |
 | `ARG_STP_PROVISAONF_FISCAL` | Botão de ação | Fiscal | A partir dos protocolos selecionados na tela de Protocolo Fiscal, calcula Natureza/Conta (via `TGFNCC`, usando rateio de `TGFRAT` quando existir) e grava **provisão + estorno D+1** direto em `TCBLAN`, já que aqui a origem não existe em nenhum lugar do sistema ainda. |
@@ -104,7 +104,7 @@ Provisão mensal das NFs/
 ```mermaid
 flowchart TD
     subgraph Compras["Setor Compras"]
-        A["Usuário clica ARG_STP_MARCARPROV no Pedido"] --> B{"DTNEG no mês corrente e TOP habilitado?"}
+        A["Usuário clica ARG_STP_MARCARPROV no Pedido"] --> B{"Entrada no mês corrente (ou mês anterior até o 5º dia útil) e TOP habilitado?"}
         B -- Não --> B1["Erro -20002 / ignora linha"]
         B -- Sim --> C["AD_PROVISIONA = 'S'"]
         C --> D["Motor nativo TGFCTB gera a perna de ORIGEM em TCBLAN (rastreada via TCBINT)"]
@@ -154,6 +154,7 @@ flowchart TD
 | 0.1.0 | 2026-07-29 | `ARG_STP_PROVISAONF_FISCAL` (setor Fiscal): migração de `AD_TCBLANMAN` para gravação direta em `TCBLAN`; de-para Natureza→Conta resolvido via `TGFNCC` | Natan |
 | 0.1.0 | 2026-07-31 | `ARG_STP_MARCARPROV`/`ARG_STP_DESMARCARPROV` (setor Compras) + `ARG_STP_GERAESTORNO_AGENDADO` adaptada para consumir origem gerada pelo motor nativo via `AD_PROVISIONA` | Natan |
 | 0.1.0 | 2026-08-03 | Ajuste do agendamento de `ARG_STP_GERAESTORNO_AGENDADO` para 1x/mês (`0 0 0 1 * ?`) em Treinamento; validação da regra de competência (dia 1 do mês seguinte) com dado real de Produção | Natan |
+| 0.1.1 | 2026-10-02 | `ARG_STP_MARCARPROV`: prazo de carência para notas do mês anterior passa do 1º para o 5º dia útil do mês (constante `C_DIAS_UTEIS`); repositório sincronizado com a versão de Produção (`DTENTSAI`, `PENDENTE='S'`); `DTENTSAI` vazia cai para `DTNEG` | Natan |
 
 ## 👤 Autor
 
