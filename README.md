@@ -47,7 +47,8 @@ Provisão mensal das NFs/
 |--------|------|-------|-----------|
 | `ARG_STP_MARCARPROV` | Botão de ação | Compras | Marca `TGFCAB.AD_PROVISIONA='S'` no Pedido selecionado (`TIPMOV='O'`). Só aceita pedidos em aberto (`PENDENTE='S'`) cuja data de entrada (`DTENTSAI`, ou `DTNEG` se vazia) seja do mês corrente, ou do mês anterior até o 5º dia útil (seg–sex, sem feriados) do mês corrente, e cujo `CODTIPOPER` esteja habilitado na fórmula nativa de `TGFCTB`. |
 | `ARG_STP_DESMARCARPROV` | Botão de ação | Compras | Desmarca `AD_PROVISIONA`. Bloqueia se o pedido já tiver lançamento gerado (`TCBINT.ORIGEM='E'`). |
-| `ARG_STP_GERAESTORNO_AGENDADO` | Rotina agendada (Proc. Banco de dados) | Compras | Encontra lançamentos de origem (gerados pelo motor nativo via `AD_PROVISIONA`) ainda sem estorno e grava a perna espelho (D↔R invertido) datada no dia 1 do mês seguinte ao da origem. |
+| `ARG_STP_GERAESTORNO_AGENDADO` | Rotina agendada (Proc. Banco de dados) | Compras | Encontra lançamentos de origem (gerados pelo motor nativo via `AD_PROVISIONA`) ainda sem estorno cujo pedido já tem NF de compra vinculada (`TGFVAR`), e grava a perna espelho (D↔R invertido) na data de entrada da 1ª NF. Um pedido com erro não trava os outros. |
+| `ARG_QRY_SIMULA_ESTORNO` | Consulta (DBExplorer) | Compras | Simula a próxima execução da rotina de estorno: pedido, valor, competência/data do estorno e se vai falhar por período fechado. |
 | `ARG_STP_PROVISAONF_FISCAL` | Botão de ação | Fiscal | A partir dos protocolos selecionados na tela de Protocolo Fiscal, calcula Natureza/Conta (via `TGFNCC`, usando rateio de `TGFRAT` quando existir) e grava **provisão + estorno D+1** direto em `TCBLAN`, já que aqui a origem não existe em nenhum lugar do sistema ainda. |
 | `ARG_QRY_STATUSPROVISAO` | Consulta (DBExplorer) | Compras | Mostra, por pedido, se a provisão e o estorno já foram lançados e em que data. **Ver Observações — precisa de ajuste antes de virar dashboard.** |
 | `ARG_QRY_PROTOCOLOFISCAL` | Consulta (grid) | Fiscal | Base da grid da tela de Protocolo Fiscal; alimenta o `ARG_STP_PROVISAONF_FISCAL`. |
@@ -94,7 +95,7 @@ Provisão mensal das NFs/
 3. **Registrar os botões de ação** `ARG_STP_MARCARPROV`, `ARG_STP_DESMARCARPROV` (tela de Pedido de Compra) e `ARG_STP_PROVISAONF_FISCAL` (tela de Protocolo Fiscal, com os parâmetros `CODCTA_PROVISAO`, `NUMLOTE`, `CODHISTCTB` configurados).
 4. **Registrar a Ação Agendada** `ARG_STP_GERAESTORNO_AGENDADO`:
    - Tipo de ação: `Proc. Banco de dados`
-   - Expressão CRON: `0 0 0 1 * ?` (dispara uma vez, dia 1 de cada mês, às 00:00 — pega tudo que ficou pendente do(s) mês(es) anterior(es))
+   - Expressão CRON: `0 0 0 * * ?` (diária, 00:00 — checa quais pedidos provisionados já receberam NF; é a configuração de Produção, `TSIAAG.NUAAG=204`)
    - **Conferir "Transação automática"**: a procedure já tem `COMMIT` explícito no final; deixar essa opção desmarcada para não conflitar.
 5. **Testar em Treinamento/Homologação** antes de ativar em Produção (ver checklist em Observações).
 6. **Ativar a Ação Agendada** só depois do sinal verde da contabilidade.
@@ -108,8 +109,8 @@ flowchart TD
         B -- Não --> B1["Erro -20002 / ignora linha"]
         B -- Sim --> C["AD_PROVISIONA = 'S'"]
         C --> D["Motor nativo TGFCTB gera a perna de ORIGEM em TCBLAN (rastreada via TCBINT)"]
-        D --> E["Todo dia 1 do mês: ARG_STP_GERAESTORNO_AGENDADO"]
-        E --> F["Gera perna de ESTORNO espelhada, D/R invertido, data = dia 1 do mês seguinte à origem"]
+        D --> E["Todo dia 00:00: ARG_STP_GERAESTORNO_AGENDADO (pedido já tem NF de compra?)"]
+        E --> F["Gera perna de ESTORNO espelhada, D/R invertido, data = entrada da 1ª NF"]
         F --> G["AD_GERAESTORNO = 'S' (flag de status)"]
     end
 
@@ -140,9 +141,10 @@ flowchart TD
 
 - **Dois fluxos independentes, mesma tabela de destino.** Compras (`MARCARPROV`/`DESMARCARPROV`/`GERAESTORNO_AGENDADO`) e Fiscal (`PROVISAONF_FISCAL`) gravam ambos em `TCBLAN`, mas por caminhos totalmente diferentes — o de Compras depende do motor nativo `TGFCTB` para a 1ª perna; o Fiscal calcula as duas pernas do zero.
 - **A perna de ESTORNO não tem `TCBINT`.** Só é rastreável via `TCBLAN.AD_NUNOTAORIG = NUNOTA`. Qualquer consulta nova que precise achar o estorno de um pedido tem que usar esse campo, não o join por `TCBINT`.
-- **Data do estorno é sempre dia 1 do mês seguinte ao da `REFERENCIA` da origem** (`TRUNC(ADD_MONTHS(REFERENCIA,1),'MM')`), independente do dia em que a rotina realmente executa. Confirmado com dado real de Produção (pedido 812914: `DTNEG=15/07`, origem gravada com `REFERENCIA=01/07`).
-- **`ARG_STP_GERAESTORNO_AGENDADO` sem tratamento de exceção.** Se uma origem falhar no meio do loop, a rotina inteira aborta sem `COMMIT` nenhum — como agora ela roda só 1x/mês, um pedido problemático trava o estorno do mês inteiro até alguém perceber e corrigir manualmente.
-- **Idempotência por `COMPLHIST` exato** (sem tabela de controle dedicada) — decisão consciente do usuário, mas frágil: se o texto gerado (`'ESTORNO AUTOMATICO - LANC ORIGEM ' || NUMLANC || ' - PEDIDO ' || NUNOTA`) mudar, a checagem de duplicidade para de funcionar.
+- **Data do estorno = entrada da 1ª NF de compra do pedido** (`MIN(NVL(DTENTSAI,DTNEG))` via `TGFVAR`), nunca antes do mês da provisão; `REFERENCIA` = mês dessa data. O estorno cai no mesmo mês da NF, então a despesa não fica duplicada. `REFERENCIA` e `DTMOV` precisam estar no mesmo mês por causa da trigger `TRG_TCBLAN_VALIDA_REF_DTMOV` (existe desde 06/03/2026): a regra anterior (mês seguinte à origem + `SYSDATE`) violava isso e deixou o job parado de 01/09 a 02/10/2026.
+- **Erro por pedido, não por lote.** Cada pedido roda num `SAVEPOINT`; se falhar, só ele é desfeito. Depois do `COMMIT` a rotina levanta `ORA-20010` com os pedidos que falharam, para aparecer no status da Ação Agendada.
+- **NF em período contábil fechado falha de propósito.** A trigger `ARG_INC_UPD_DEL_TCBLAN` bloqueia lançamento com `DTMOV` até o último `AD_FECHAMOD.PERFECHA`. Por decisão de 02/10/2026 a data não é empurrada para o 1º dia aberto: o pedido fica no erro do job até a contabilidade reabrir o período ou liberar em `AD_LANEXCECAO`. A coluna `PREVISAO` da `ARG_QRY_SIMULA_ESTORNO` mostra esses casos antes de rodar.
+- **Idempotência:** `TGFCAB.AD_GERAESTORNO<>'S'` + não existir nenhum estorno do pedido (`TCBLAN.AD_NUNOTAORIG` + `INDESTORNADO='S'`). O texto do `COMPLHIST` é só exibição.
 - **`ARG_QRY_STATUSPROVISAO.sql` precisa de ajuste antes de virar dashboard**: a versão atual detecta a perna de estorno via join `TCBINT`→`TCBLAN`, igual à perna de origem — mas isso nunca vai casar nenhuma linha, porque o estorno não tem `TCBINT` (ver ponto acima). Precisa trocar para usar `TCBLAN.AD_NUNOTAORIG`, igual já foi validado manualmente via DBExplorer.
 - **Três ambientes Sankhya distintos**: Treinamento (`192.168.5.82:8380`), Homologação (`sankhyahomolo.argofruta.com`) e Produção (`sankhyaprod.argofruta.com`). A Ação Agendada precisa ser conferida/configurada em cada um separadamente — não são a mesma instância.
 - **Status atual (03/08/2026): em validação, não aprovado em produção.** A Ação Agendada de Produção segue com sua config original até a contabilidade validar o novo cron (`0 0 0 1 * ?`, hoje só ajustado em Treinamento). Pendências conhecidas: confirmar "Transação automática" da Ação Agendada em Produção; validar assunções (a) mesmo `NUMLOTE` do estorno e (c) `CODUSU` do estorno = usuário da origem (só a assunção de data foi confirmada até agora).
@@ -155,6 +157,7 @@ flowchart TD
 | 0.1.0 | 2026-07-31 | `ARG_STP_MARCARPROV`/`ARG_STP_DESMARCARPROV` (setor Compras) + `ARG_STP_GERAESTORNO_AGENDADO` adaptada para consumir origem gerada pelo motor nativo via `AD_PROVISIONA` | Natan |
 | 0.1.0 | 2026-08-03 | Ajuste do agendamento de `ARG_STP_GERAESTORNO_AGENDADO` para 1x/mês (`0 0 0 1 * ?`) em Treinamento; validação da regra de competência (dia 1 do mês seguinte) com dado real de Produção | Natan |
 | 0.1.1 | 2026-10-02 | `ARG_STP_MARCARPROV`: prazo de carência para notas do mês anterior passa do 1º para o 5º dia útil do mês (constante `C_DIAS_UTEIS`); repositório sincronizado com a versão de Produção (`DTENTSAI`, `PENDENTE='S'`); `DTENTSAI` vazia cai para `DTNEG` | Natan |
+| 0.1.2 | 2026-10-02 | `ARG_STP_GERAESTORNO_AGENDADO` (CORREÇÃO 7): estorno na data de entrada da 1ª NF (`REFERENCIA` e `DTMOV` no mesmo mês, compatível com `TRG_TCBLAN_VALIDA_REF_DTMOV`); `SAVEPOINT` por pedido com lista de falhas no erro do job; nova `ARG_QRY_SIMULA_ESTORNO`. Repositório sincronizado com a versão de Produção de 18/08/2026 (correções 4 a 6) | Natan |
 
 ## 👤 Autor
 
