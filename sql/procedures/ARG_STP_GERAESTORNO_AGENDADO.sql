@@ -130,13 +130,38 @@
 -- gerado. O texto do COMPLHIST (padrão RS-DM da CORREÇÃO 4) continua sendo
 -- gravado igual, só deixou de ser usado como chave de comparação.
 --
+-- CORREÇÃO 7 (02/10/2026) - job parado desde 01/09/2026, nenhum estorno
+-- gerado depois de 27/08: a regra da CORREÇÃO 3 (REFERENCIA = mês seguinte
+-- à origem, DTMOV = SYSDATE) gera REFERENCIA e DTMOV em meses diferentes
+-- sempre que o job detecta a NF fora do mês seguinte à provisão. A trigger
+-- TRG_TCBLAN_VALIDA_REF_DTMOV (existe desde 06/03/2026) recusa isso
+-- (ORA-20001 "Mês/Ano da REFERENCIA difere do DTMOV"). Como o loop era uma
+-- transação só, o 1º pedido recusado (803451, provisão 07/2026, NF de
+-- 28/08) desfazia o lote inteiro todo dia - as 122 provisões de 08/2026
+-- nunca foram estornadas. Mudanças:
+--   1) Data do estorno = entrada da 1ª NF de compra vinculada ao pedido
+--      (MIN(NVL(DTENTSAI, DTNEG)) em TGFVAR, TIPMOV='C'), nunca antes do mês
+--      da provisão. REFERENCIA = mês dessa data. Assim o estorno cai no
+--      mesmo mês da NF e a despesa não fica duplicada (provisão no mês
+--      dela, NF - estorno = 0 no mês da NF). REFERENCIA e DTMOV voltam a
+--      estar sempre no mesmo mês.
+--   2) SAVEPOINT por pedido: erro num pedido desfaz só ele, os outros são
+--      gravados. No fim, depois do COMMIT, a rotina levanta ORA-20010 com a
+--      lista dos pedidos que falharam, pra aparecer no status da Ação
+--      Agendada.
+--   3) NF em período contábil fechado (AD_FECHAMOD, trigger
+--      ARG_INC_UPD_DEL_TCBLAN): por decisão do usuário (02/10/2026) a data
+--      NÃO é empurrada pro 1º dia aberto - o pedido falha e fica listado
+--      no erro do job até a contabilidade reabrir o período ou liberar o
+--      lançamento em AD_LANEXCECAO.
+-- Simulação do que será gerado: sql/queries/ARG_QRY_SIMULA_ESTORNO.sql.
+--
 -- PENDÊNCIAS / ASSUNÇÕES A CONFIRMAR antes de agendar em produção:
 --   a) Estamos assumindo que o ESTORNO vai pro MESMO NUMLOTE da ORIGEM
 --      (V_NUMLOTE_ESTORNO := CAB_LANC.NUMLOTE).
---   b) REFERENCIA do estorno = dia 1 do mês seguinte ao mês de
---      CAB_LANC.REFERENCIA (competência da origem); DTMOV do estorno =
---      SYSDATE (dia em que o job roda e detecta o faturamento) - ver
---      CORREÇÃO 3. Assume que o job roda 1x por dia.
+--   b) DTMOV do estorno = entrada da 1ª NF (nunca antes do mês da
+--      provisão); REFERENCIA = mês do DTMOV - ver CORREÇÃO 7, que substitui
+--      a regra da CORREÇÃO 3.
 --   c) CODUSU do estorno = mesmo usuário do lançamento de origem (L.CODUSU).
 --   d) Idempotência por AD_GERAESTORNO<>'S' (trava de entrada) + NOT EXISTS
 --      de "algum estorno já existe pra este pedido" (AD_NUNOTAORIG+CODEMP+
@@ -154,7 +179,10 @@
 --   Tipo de ação        = Proc. Banco de dados
 --   Ação                = ARG_STP_GERAESTORNO_AGENDADO
 --   Transação automática = DESMARCADA (por isso o COMMIT explícito no final -
---                          sem essa marcação o Sankhya não comita sozinho)
+--                          sem essa marcação o Sankhya não comita sozinho).
+--                          Em produção (TSIAAG.NUAAG=204) está MARCADA
+--                          (AUTOTRAN='S') em 02/10/2026; o COMMIT da rotina
+--                          vale do mesmo jeito.
 --   Usuário Logado      = não precisa (SQL puro, sem chamada de API/entidade)
 --   Config. expressão    = diária (ex.: 0 0 6 * * ?) - roda 1x por dia,
 --                          checando quais pedidos provisionados já faturaram
@@ -163,12 +191,14 @@
 CREATE OR REPLACE PROCEDURE "ARG_STP_GERAESTORNO_AGENDADO" AS
 
     V_NUMLOTE_ESTORNO   NUMBER;
-    V_REF_ESTORNO       DATE;   -- REFERENCIA: dia 1 do mês seguinte ao da competência da origem
-    V_DTMOV_ESTORNO     DATE;   -- DTMOV: data real em que o estorno é gerado (hoje)
+    V_REF_ESTORNO       DATE;   -- REFERENCIA: dia 1 do mês do DTMOV (CORREÇÃO 7)
+    V_DTMOV_ESTORNO     DATE;   -- DTMOV: entrada da 1ª NF, nunca antes do mês da provisão (CORREÇÃO 7)
     V_NUMLANC_ESTORNO   NUMBER;
     V_SEQ               NUMBER;
     V_QTD_LOTE          NUMBER;
     V_QTD_GERADOS       NUMBER := 0;
+    V_QTD_ERROS         NUMBER := 0;
+    V_ERROS             VARCHAR2(4000);
 
 BEGIN
 
@@ -185,7 +215,13 @@ BEGIN
     -- -------------------------------------------------------------------
     FOR CAB_LANC IN (
         SELECT DISTINCT L.CODEMP, L.REFERENCIA, L.NUMLOTE, L.NUMLANC, CAB.NUNOTA,
-               NVL(PAR.RAZAOSOCIAL, PAR.NOMEPARC) AS NOMEPARC
+               NVL(PAR.RAZAOSOCIAL, PAR.NOMEPARC) AS NOMEPARC,
+               -- CORREÇÃO 7: entrada da 1ª NF de compra vinculada ao pedido
+               (SELECT TRUNC(MIN(NVL(DEST.DTENTSAI, DEST.DTNEG)))
+                  FROM TGFVAR VAR
+                  JOIN TGFCAB DEST ON DEST.NUNOTA = VAR.NUNOTA
+                 WHERE VAR.NUNOTAORIG = CAB.NUNOTA
+                   AND DEST.TIPMOV = 'C') AS DT_NF
           FROM TCBINT TCI
           JOIN TGFCAB CAB ON CAB.NUNOTA = TCI.NUNICO
           JOIN SANKHYA.TCBLAN L
@@ -243,69 +279,94 @@ BEGIN
                )
     )
     LOOP
-        V_NUMLOTE_ESTORNO := CAB_LANC.NUMLOTE;                                   -- assunção (a)
-        V_REF_ESTORNO     := ADD_MONTHS(TRUNC(CAB_LANC.REFERENCIA, 'MM'), 1);   -- assunção (b): dia 1 do mês seguinte à competência da origem
-        V_DTMOV_ESTORNO   := TRUNC(SYSDATE);                                    -- assunção (b): dia da execução do job (pedido faturou hoje)
+        -- CORREÇÃO 7: cada pedido em seu próprio SAVEPOINT - erro aqui desfaz
+        -- só este pedido e o loop segue pros próximos.
+        SAVEPOINT SP_ESTORNO;
 
-        -- Garante o lote (CODEMP, REFERENCIA, NUMLOTE) na TCBLOT pro dia do
-        -- estorno - mesma lógica de auto-criação da ARG_STP_PROVISAONF_FISCAL.
-        SELECT COUNT(*) INTO V_QTD_LOTE
-          FROM SANKHYA.TCBLOT
-         WHERE CODEMP = CAB_LANC.CODEMP
-           AND REFERENCIA = V_REF_ESTORNO
-           AND NUMLOTE = V_NUMLOTE_ESTORNO;
+        BEGIN
+            V_NUMLOTE_ESTORNO := CAB_LANC.NUMLOTE;                                          -- assunção (a)
+            V_DTMOV_ESTORNO   := GREATEST(CAB_LANC.DT_NF, TRUNC(CAB_LANC.REFERENCIA, 'MM')); -- assunção (b): entrada da NF, nunca antes do mês da provisão
+            V_REF_ESTORNO     := TRUNC(V_DTMOV_ESTORNO, 'MM');                               -- assunção (b): mesmo mês do DTMOV (TRG_TCBLAN_VALIDA_REF_DTMOV)
 
-        IF V_QTD_LOTE = 0 THEN
-            INSERT INTO SANKHYA.TCBLOT (CODEMP, REFERENCIA, NUMLOTE, DTMOV, SITUACAO, ULTLANC, CODUSU)
-            VALUES (CAB_LANC.CODEMP, V_REF_ESTORNO, V_NUMLOTE_ESTORNO, V_DTMOV_ESTORNO, 'A', 0, 0);
-        END IF;
-
-        SELECT NVL(MAX(NUMLANC), 0) + 1 INTO V_NUMLANC_ESTORNO
-          FROM SANKHYA.TCBLAN
-         WHERE CODEMP = CAB_LANC.CODEMP AND REFERENCIA = V_REF_ESTORNO AND NUMLOTE = V_NUMLOTE_ESTORNO;
-
-        V_SEQ := 0;
-
-        -- Espelha cada linha da origem, invertendo só o TIPLANC (D<->R) -
-        -- ver explicação no cabeçalho do arquivo.
-        FOR L IN (
-            SELECT * FROM SANKHYA.TCBLAN
+            -- Garante o lote (CODEMP, REFERENCIA, NUMLOTE) na TCBLOT pro dia do
+            -- estorno - mesma lógica de auto-criação da ARG_STP_PROVISAONF_FISCAL.
+            SELECT COUNT(*) INTO V_QTD_LOTE
+              FROM SANKHYA.TCBLOT
              WHERE CODEMP = CAB_LANC.CODEMP
-               AND REFERENCIA = CAB_LANC.REFERENCIA
-               AND NUMLOTE = CAB_LANC.NUMLOTE
-               AND NUMLANC = CAB_LANC.NUMLANC
-             ORDER BY SEQUENCIA
-        )
-        LOOP
-            V_SEQ := V_SEQ + 1;
+               AND REFERENCIA = V_REF_ESTORNO
+               AND NUMLOTE = V_NUMLOTE_ESTORNO;
 
-            INSERT INTO SANKHYA.TCBLAN (
-                CODEMP, REFERENCIA, NUMLOTE, NUMLANC, TIPLANC, SEQUENCIA,
-                CODCTACTB, CODCONPAR, CODCENCUS, DTMOV, VLRLANC,
-                CODHISTCTB, COMPLHIST, LIBERADO, CODUSU, INDESTORNADO,
-                AD_NUNOTAORIG, AD_CODPARC, NUMDOC, CODPROJ
-            ) VALUES (
-                L.CODEMP, V_REF_ESTORNO, V_NUMLOTE_ESTORNO, V_NUMLANC_ESTORNO,
-                CASE L.TIPLANC WHEN 'D' THEN 'R' ELSE 'D' END, V_SEQ,
-                L.CODCTACTB, L.CODCONPAR, L.CODCENCUS, V_DTMOV_ESTORNO, L.VLRLANC,
-                L.CODHISTCTB,
-                'ESTORNO - ' || CAB_LANC.NOMEPARC || ' - ' || TO_CHAR(V_DTMOV_ESTORNO, 'DD/MM/YYYY'),
-                'S', NVL(L.CODUSU, 0), 'S',
-                CAB_LANC.NUNOTA, L.AD_CODPARC, L.NUMDOC, L.CODPROJ
-            );
-        END LOOP;
+            IF V_QTD_LOTE = 0 THEN
+                INSERT INTO SANKHYA.TCBLOT (CODEMP, REFERENCIA, NUMLOTE, DTMOV, SITUACAO, ULTLANC, CODUSU)
+                VALUES (CAB_LANC.CODEMP, V_REF_ESTORNO, V_NUMLOTE_ESTORNO, V_DTMOV_ESTORNO, 'A', 0, 0);
+            END IF;
 
-        -- Marca o pedido como "estorno gerado" pra contabilidade acompanhar
-        -- sem precisar ligar o campo manualmente pela Central de Notas.
-        UPDATE TGFCAB
-           SET AD_GERAESTORNO = 'S'
-         WHERE NUNOTA = CAB_LANC.NUNOTA
-           AND NVL(AD_GERAESTORNO,'N') <> 'S';
+            SELECT NVL(MAX(NUMLANC), 0) + 1 INTO V_NUMLANC_ESTORNO
+              FROM SANKHYA.TCBLAN
+             WHERE CODEMP = CAB_LANC.CODEMP AND REFERENCIA = V_REF_ESTORNO AND NUMLOTE = V_NUMLOTE_ESTORNO;
 
-        V_QTD_GERADOS := V_QTD_GERADOS + 1;
+            V_SEQ := 0;
+
+            -- Espelha cada linha da origem, invertendo só o TIPLANC (D<->R) -
+            -- ver explicação no cabeçalho do arquivo.
+            FOR L IN (
+                SELECT * FROM SANKHYA.TCBLAN
+                 WHERE CODEMP = CAB_LANC.CODEMP
+                   AND REFERENCIA = CAB_LANC.REFERENCIA
+                   AND NUMLOTE = CAB_LANC.NUMLOTE
+                   AND NUMLANC = CAB_LANC.NUMLANC
+                 ORDER BY SEQUENCIA
+            )
+            LOOP
+                V_SEQ := V_SEQ + 1;
+
+                INSERT INTO SANKHYA.TCBLAN (
+                    CODEMP, REFERENCIA, NUMLOTE, NUMLANC, TIPLANC, SEQUENCIA,
+                    CODCTACTB, CODCONPAR, CODCENCUS, DTMOV, VLRLANC,
+                    CODHISTCTB, COMPLHIST, LIBERADO, CODUSU, INDESTORNADO,
+                    AD_NUNOTAORIG, AD_CODPARC, NUMDOC, CODPROJ
+                ) VALUES (
+                    L.CODEMP, V_REF_ESTORNO, V_NUMLOTE_ESTORNO, V_NUMLANC_ESTORNO,
+                    CASE L.TIPLANC WHEN 'D' THEN 'R' ELSE 'D' END, V_SEQ,
+                    L.CODCTACTB, L.CODCONPAR, L.CODCENCUS, V_DTMOV_ESTORNO, L.VLRLANC,
+                    L.CODHISTCTB,
+                    'ESTORNO - ' || CAB_LANC.NOMEPARC || ' - ' || TO_CHAR(V_DTMOV_ESTORNO, 'DD/MM/YYYY'),
+                    'S', NVL(L.CODUSU, 0), 'S',
+                    CAB_LANC.NUNOTA, L.AD_CODPARC, L.NUMDOC, L.CODPROJ
+                );
+            END LOOP;
+
+            -- Marca o pedido como "estorno gerado" pra contabilidade acompanhar
+            -- sem precisar ligar o campo manualmente pela Central de Notas.
+            UPDATE TGFCAB
+               SET AD_GERAESTORNO = 'S'
+             WHERE NUNOTA = CAB_LANC.NUNOTA
+               AND NVL(AD_GERAESTORNO,'N') <> 'S';
+
+            V_QTD_GERADOS := V_QTD_GERADOS + 1;
+
+        EXCEPTION
+            WHEN OTHERS THEN
+                ROLLBACK TO SP_ESTORNO;
+                V_QTD_ERROS := V_QTD_ERROS + 1;
+                -- Guarda só a 1ª linha da mensagem (sem a pilha ORA-06512).
+                IF NVL(LENGTH(V_ERROS), 0) < 1700 THEN
+                    V_ERROS := V_ERROS || ' | ' || CAB_LANC.NUNOTA || ': '
+                            || SUBSTR(REGEXP_SUBSTR(SQLERRM, '[^' || CHR(10) || ']+'), 1, 150);
+                END IF;
+        END;
     END LOOP;
 
     COMMIT;
+
+    -- CORREÇÃO 7: os estornos que deram certo já estão gravados (COMMIT acima).
+    -- O erro abaixo só serve pra Ação Agendada ficar com status de erro e
+    -- mostrar quais pedidos não foram estornados.
+    IF V_QTD_ERROS > 0 THEN
+        RAISE_APPLICATION_ERROR(-20010,
+            'Estornos gerados: ' || V_QTD_GERADOS || '. Pedidos com erro: ' || V_QTD_ERROS
+            || SUBSTR(V_ERROS, 1, 1800));
+    END IF;
 
 END;
 /
