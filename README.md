@@ -158,6 +158,7 @@ flowchart TD
 | 0.1.0 | 2026-08-03 | Ajuste do agendamento de `ARG_STP_GERAESTORNO_AGENDADO` para 1x/mês (`0 0 0 1 * ?`) em Treinamento; validação da regra de competência (dia 1 do mês seguinte) com dado real de Produção | Natan |
 | 0.1.1 | 2026-10-02 | `ARG_STP_MARCARPROV`: prazo de carência para notas do mês anterior passa do 1º para o 5º dia útil do mês (constante `C_DIAS_UTEIS`); repositório sincronizado com a versão de Produção (`DTENTSAI`, `PENDENTE='S'`); `DTENTSAI` vazia cai para `DTNEG` | Natan |
 | 0.1.2 | 2026-10-02 | `ARG_STP_GERAESTORNO_AGENDADO` (CORREÇÃO 7): estorno na data de entrada da 1ª NF (`REFERENCIA` e `DTMOV` no mesmo mês, compatível com `TRG_TCBLAN_VALIDA_REF_DTMOV`); `SAVEPOINT` por pedido com lista de falhas no erro do job; nova `ARG_QRY_SIMULA_ESTORNO`. Repositório sincronizado com a versão de Produção de 18/08/2026 (correções 4 a 6) | Natan |
+| 0.1.3 | 2026-11-03 | `ARG_STP_ESTORNO_MANUAL` (botão 320, CORREÇÃO 8): mesma regra de data da CORREÇÃO 7 (1ª NF, ou o dia do clique sem NF; `REFERENCIA` no mês do `DTMOV`); idempotência só por `AD_NUNOTAORIG`, sem `COMPLHIST` nem `AD_GERAESTORNO` (marca copiada ao duplicar pedido, caso 890441); `SAVEPOINT` por pedido e mensagem com gerados, erros e pedidos sem provisão pendente | Natan |
 
 ## 👤 Autor
 
