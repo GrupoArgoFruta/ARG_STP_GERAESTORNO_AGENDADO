@@ -4,9 +4,24 @@
 -- no dash 384 "STATUS DA PROVISÃO DE UM PEDIDO DE COMPRA".
 --
 -- Gera o ESTORNO (2ª perna) da provisão dos pedidos selecionados. É a versão
--- manual da ARG_STP_GERAESTORNO_AGENDADO e usa as mesmas regras de data.
+-- manual da ARG_STP_GERAESTORNO_AGENDADO, mas com regra de data própria
+-- (CORREÇÃO 9).
 --
--- CORREÇÃO 8 (03/11/2026), mesma regra de data da CORREÇÃO 7 da agendada:
+-- CORREÇÃO 9 (05/11/2026), substitui a regra de data da CORREÇÃO 8:
+--   Problema: pedido 865665 (provisão 09/2026, DTMOV 16/09, sem NF ligada)
+--   foi estornado pelo botão em 04/11/2026 17:27 e ficou com REFERENCIA
+--   11/2026 e DTMOV 04/11/2026, a data do clique. O estorno tem que ficar
+--   no mês seguinte ao da provisão.
+--   Agora: REFERENCIA = DTMOV = dia 1 do mês seguinte ao da provisão
+--   (provisão 09/2026 -> 01/10/2026), com ou sem NF e qualquer que seja o
+--   dia do clique. Não olha mais a data da NF (TGFVAR).
+--   A agendada NÃO mudou: continua estornando na data da 1ª NF (CORREÇÃO 7),
+--   decisão do TI em 05/11/2026 (regra nova só para o botão).
+--   Se o mês seguinte estiver fechado (AD_FECHAMOD), o pedido falha e
+--   aparece na mensagem, como antes.
+--
+-- CORREÇÃO 8 (03/11/2026, regra de data SUPERADA pela CORREÇÃO 9; o resto
+-- continua valendo), mesma regra de data da CORREÇÃO 7 da agendada:
 --   Antes: REFERENCIA = mês seguinte ao da provisão e DTMOV = dia do clique.
 --   A trigger TRG_TCBLAN_VALIDA_REF_DTMOV recusa REFERENCIA e DTMOV em meses
 --   diferentes (ORA-20001), então o botão só funcionava no mês seguinte ao
@@ -28,9 +43,15 @@
 --     período contábil fechado) não desfaz os outros. A mensagem final
 --     lista quantos foram gerados, os erros e os pedidos sem nada a estornar.
 --
--- Período fechado (AD_FECHAMOD): se a data cair num mês fechado, o pedido
--- falha e aparece na mensagem. A data não é empurrada para o 1º dia aberto
--- (mesma decisão da agendada, 02/10/2026).
+-- Período fechado (AD_FECHAMOD): se o mês seguinte à provisão estiver
+-- fechado, o pedido falha e aparece na mensagem. A data não é empurrada para
+-- o 1º dia aberto (mesma decisão da agendada, 02/10/2026).
+--
+-- COMPILAR NO DBEAVER SEM FORMATAR: o formatador (Ctrl+Shift+F) quebra
+-- "END LOOP;" em "END" + "LOOP;", o DBeaver entende o "END" como fim da
+-- procedure, compila só até ali (INVALID, PLS-00103) e manda o resto como
+-- SQL solto (ORA-00933). Aconteceu em 03/11/2026. Abrir o arquivo como está
+-- e rodar com Alt+X (Executar script).
 -- ============================================================================
 
 CREATE OR REPLACE PROCEDURE SANKHYA.ARG_STP_ESTORNO_MANUAL (
@@ -41,8 +62,8 @@ CREATE OR REPLACE PROCEDURE SANKHYA.ARG_STP_ESTORNO_MANUAL (
 ) AS
        FIELD_NUNOTA       NUMBER;
        V_NUMLOTE_ESTORNO  NUMBER;
-       V_REF_ESTORNO      DATE;   -- REFERENCIA: dia 1 do mês do DTMOV
-       V_DTMOV_ESTORNO    DATE;   -- DTMOV: entrada da 1ª NF (ou hoje), nunca antes do mês da provisão
+       V_REF_ESTORNO      DATE;   -- REFERENCIA: dia 1 do mês seguinte ao da provisão (CORREÇÃO 9)
+       V_DTMOV_ESTORNO    DATE;   -- DTMOV: igual à REFERENCIA (CORREÇÃO 9)
        V_NUMLANC_ESTORNO  NUMBER;
        V_SEQ              NUMBER;
        V_QTD_LOTE         NUMBER;
@@ -59,12 +80,7 @@ BEGIN
 
            FOR CAB_LANC IN (
                SELECT DISTINCT L.CODEMP, L.REFERENCIA, L.NUMLOTE, L.NUMLANC, CAB.NUNOTA,
-                      NVL(PAR.RAZAOSOCIAL, PAR.NOMEPARC) AS NOMEPARC,
-                      (SELECT TRUNC(MIN(NVL(DEST.DTENTSAI, DEST.DTNEG)))
-                         FROM TGFVAR VAR
-                         JOIN TGFCAB DEST ON DEST.NUNOTA = VAR.NUNOTA
-                        WHERE VAR.NUNOTAORIG = CAB.NUNOTA
-                          AND DEST.TIPMOV = 'C') AS DT_NF
+                      NVL(PAR.RAZAOSOCIAL, PAR.NOMEPARC) AS NOMEPARC
                  FROM TCBINT TCI
                  JOIN TGFCAB CAB ON CAB.NUNOTA = TCI.NUNICO
                  JOIN SANKHYA.TCBLAN L
@@ -91,9 +107,10 @@ BEGIN
 
                BEGIN
                    V_NUMLOTE_ESTORNO := CAB_LANC.NUMLOTE;
-                   V_DTMOV_ESTORNO   := GREATEST(NVL(CAB_LANC.DT_NF, TRUNC(SYSDATE)),
-                                                 TRUNC(CAB_LANC.REFERENCIA, 'MM'));
-                   V_REF_ESTORNO     := TRUNC(V_DTMOV_ESTORNO, 'MM');
+                   -- CORREÇÃO 9: dia 1 do mês seguinte ao da provisão,
+                   -- REFERENCIA e DTMOV iguais (TRG_TCBLAN_VALIDA_REF_DTMOV).
+                   V_REF_ESTORNO     := ADD_MONTHS(TRUNC(CAB_LANC.REFERENCIA, 'MM'), 1);
+                   V_DTMOV_ESTORNO   := V_REF_ESTORNO;
 
                    SELECT COUNT(*) INTO V_QTD_LOTE
                      FROM SANKHYA.TCBLOT
@@ -158,7 +175,10 @@ BEGIN
            END LOOP;
 
            IF V_QTD_PEDIDO = 0 AND NVL(LENGTH(V_SEM_ESTORNO), 0) < 500 THEN
-               V_SEM_ESTORNO := V_SEM_ESTORNO || CASE WHEN V_SEM_ESTORNO IS NOT NULL THEN ', ' END || FIELD_NUNOTA;
+               IF V_SEM_ESTORNO IS NOT NULL THEN
+                   V_SEM_ESTORNO := V_SEM_ESTORNO || ', ';
+               END IF;
+               V_SEM_ESTORNO := V_SEM_ESTORNO || FIELD_NUNOTA;
            END IF;
 
        END LOOP;
