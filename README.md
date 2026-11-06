@@ -25,6 +25,7 @@ Provisão mensal das NFs/
 │   ├── procedures/
 │   │   ├── ARG_STP_MARCARPROV.sql            # Botão: marca Pedido de Compra p/ provisão
 │   │   ├── ARG_STP_DESMARCARPROV.sql         # Botão: desmarca (se ainda não contabilizado)
+│   │   ├── ARG_STP_PROVISAO_PEDIDO.sql       # Botão único: provisionar ou desprovisionar (parâmetro ACAO)
 │   │   ├── ARG_STP_GERAESTORNO_AGENDADO.sql  # Rotina agendada: gera a perna de estorno
 │   │   └── ARG_STP_PROVISAONF_FISCAL.sql     # Botão: provisão do setor Fiscal (via Protocolo)
 │   └── queries/
@@ -47,6 +48,7 @@ Provisão mensal das NFs/
 |--------|------|-------|-----------|
 | `ARG_STP_MARCARPROV` | Botão de ação | Compras | Marca `TGFCAB.AD_PROVISIONA='S'` no Pedido selecionado (`TIPMOV='O'`). Só aceita pedidos em aberto (`PENDENTE='S'`) cuja data de entrada (`DTENTSAI`, ou `DTNEG` se vazia) seja do mês corrente, ou do mês anterior até o 5º dia útil (seg–sex, sem feriados) do mês corrente, e cujo `CODTIPOPER` esteja habilitado na fórmula nativa de `TGFCTB`. |
 | `ARG_STP_DESMARCARPROV` | Botão de ação | Compras | Desmarca `AD_PROVISIONA`. Bloqueia se o pedido já tiver lançamento gerado (`TCBINT.ORIGEM='E'`). |
+| `ARG_STP_PROVISAO_PEDIDO` | Botão de ação | Compras | Junta `MARCARPROV` e `DESMARCARPROV` num botão só: o usuário escolhe `P` (provisionar) ou `D` (desprovisionar) no parâmetro `ACAO`. Mesmas regras dos dois botões, mas cada pedido é avaliado sozinho: os válidos são processados e os recusados voltam na mensagem com o motivo (já faturado pela NF tal, TOP fora da regra, data fora do prazo, já provisionado, já contabilizado etc.), sem desfazer o lote. **Testado só no Treinamento (botão 352); não está em produção.** Ainda falta a trava por grupo para `D` (hoje o botão não separa quem pode desprovisionar). |
 | `ARG_STP_GERAESTORNO_AGENDADO` | Rotina agendada (Proc. Banco de dados) | Compras | Encontra lançamentos de origem (gerados pelo motor nativo via `AD_PROVISIONA`) ainda sem estorno cujo pedido já tem NF de compra vinculada (`TGFVAR`), e grava a perna espelho (D↔R invertido) na data de entrada da 1ª NF. Um pedido com erro não trava os outros. |
 | `ARG_QRY_SIMULA_ESTORNO` | Consulta (DBExplorer) | Compras | Simula a próxima execução da rotina de estorno: pedido, valor, competência/data do estorno e se vai falhar por período fechado. |
 | `ARG_STP_PROVISAONF_FISCAL` | Botão de ação | Fiscal | A partir dos protocolos selecionados na tela de Protocolo Fiscal, calcula Natureza/Conta (via `TGFNCC`, usando rateio de `TGFRAT` quando existir) e grava **provisão + estorno D+1** direto em `TCBLAN`, já que aqui a origem não existe em nenhum lugar do sistema ainda. |
@@ -58,6 +60,7 @@ Provisão mensal das NFs/
 | Procedure | Parâmetros |
 |-----------|------------|
 | `ARG_STP_MARCARPROV` / `ARG_STP_DESMARCARPROV` | `P_CODUSU`, `P_IDSESSAO`, `P_QTDLINHAS`, `P_MENSAGEM OUT` (assinatura padrão de botão SQL do Sankhya) |
+| `ARG_STP_PROVISAO_PEDIDO` | Assinatura padrão de botão + parâmetro de tela `ACAO` (lista de opções `P=Provisionar;D=Desprovisionar`) |
 | `ARG_STP_PROVISAONF_FISCAL` | `P_CODUSU`, `P_IDSESSAO`, `P_QTDLINHAS`, `P_MENSAGEM OUT` + parâmetros de tela `CODCTA_PROVISAO` (conta de "Provisão de Pagamento"), `NUMLOTE`, `CODHISTCTB` |
 | `ARG_STP_GERAESTORNO_AGENDADO` | Nenhum (Ação Agendada tipo "Proc. Banco de dados", sem parâmetro) |
 
@@ -90,7 +93,7 @@ Provisão mensal das NFs/
 
 ## 🚀 Guia de Implantação
 
-1. **Compilar as procedures** em `sql/procedures/` (ordem livre, sem dependência entre elas).
+1. **Compilar as procedures** em `sql/procedures/` (ordem livre, sem dependência entre elas). **No DBeaver, abrir o arquivo sem formatar e rodar com Alt+X:** o formatador quebra `END LOOP;` em `END` / `LOOP;` e a procedure fica INVALID. Depois conferir `USER_OBJECTS.STATUS`.
 2. **Conferir os campos `AD_` já existentes** no Dicionário de Dados (`AD_PROVISIONA`, `AD_GERAESTORNO` em `TGFCAB`; `AD_NUNOTAORIG`, `AD_CODPARC` em `TCBLAN`) — se o ambiente for novo, criar antes de compilar.
 3. **Registrar os botões de ação** `ARG_STP_MARCARPROV`, `ARG_STP_DESMARCARPROV` (tela de Pedido de Compra) e `ARG_STP_PROVISAONF_FISCAL` (tela de Protocolo Fiscal, com os parâmetros `CODCTA_PROVISAO`, `NUMLOTE`, `CODHISTCTB` configurados).
 4. **Registrar a Ação Agendada** `ARG_STP_GERAESTORNO_AGENDADO`:
@@ -158,6 +161,7 @@ flowchart TD
 | 0.1.0 | 2026-08-03 | Ajuste do agendamento de `ARG_STP_GERAESTORNO_AGENDADO` para 1x/mês (`0 0 0 1 * ?`) em Treinamento; validação da regra de competência (dia 1 do mês seguinte) com dado real de Produção | Natan |
 | 0.1.1 | 2026-10-02 | `ARG_STP_MARCARPROV`: prazo de carência para notas do mês anterior passa do 1º para o 5º dia útil do mês (constante `C_DIAS_UTEIS`); repositório sincronizado com a versão de Produção (`DTENTSAI`, `PENDENTE='S'`); `DTENTSAI` vazia cai para `DTNEG` | Natan |
 | 0.1.2 | 2026-10-02 | `ARG_STP_GERAESTORNO_AGENDADO` (CORREÇÃO 7): estorno na data de entrada da 1ª NF (`REFERENCIA` e `DTMOV` no mesmo mês, compatível com `TRG_TCBLAN_VALIDA_REF_DTMOV`); `SAVEPOINT` por pedido com lista de falhas no erro do job; nova `ARG_QRY_SIMULA_ESTORNO`. Repositório sincronizado com a versão de Produção de 18/08/2026 (correções 4 a 6) | Natan |
+| 0.1.4 | 2026-11-06 | `ARG_STP_MARCARPROV`/`ARG_STP_DESMARCARPROV`: a mensagem passa a dizer o motivo de cada pedido não processado (antes só "0 marcada(s)"), sem mudar nenhuma regra (trava de data e nota contabilizada seguem dando erro e desfazendo o lote). Nova `ARG_STP_PROVISAO_PEDIDO` (botão único `ACAO` P/D, lote parcial com motivo por nota), testada no Treinamento. Origem: pedidos de frete da Argologística (empresa 10) 935261 e 935268 voltaram "0 marcada(s)" porque já estavam faturados (NF 1807 e 1808) | Natan |
 | 0.1.3 | 2026-11-03 | `ARG_STP_ESTORNO_MANUAL` (botão 320, CORREÇÃO 8): mesma regra de data da CORREÇÃO 7 (1ª NF, ou o dia do clique sem NF; `REFERENCIA` no mês do `DTMOV`); idempotência só por `AD_NUNOTAORIG`, sem `COMPLHIST` nem `AD_GERAESTORNO` (marca copiada ao duplicar pedido, caso 890441); `SAVEPOINT` por pedido e mensagem com gerados, erros e pedidos sem provisão pendente | Natan |
 
 ## 👤 Autor
